@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DBSCAN Clássico vs Quântico — Pedro Paulo Ribeiro</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2a3342;
+  --txt:#e6edf3; --mut:#8b98a9; --cl:#38bdf8; --qt:#a78bfa; --ok:#34d399; --warn:#fbbf24;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'IBM Plex Sans',system-ui,sans-serif;line-height:1.5}
+a{color:var(--cl);text-decoration:none} a:hover{text-decoration:underline}
+header{background:linear-gradient(135deg,#111827,#1e1b4b);border-bottom:1px solid var(--line);padding:18px 24px}
+.top{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;max-width:1280px;margin:auto}
+h1{margin:0;font-size:1.5rem} h1 span{color:var(--qt)}
+.sub{color:var(--mut);font-size:.9rem;margin-top:2px}
+.contatos{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.contatos strong{width:100%;font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+main{max-width:1280px;margin:auto;padding:20px 16px 40px}
+.tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap}
+.tab{background:none;border:none;color:var(--mut);font:inherit;font-weight:600;padding:12px 18px;cursor:pointer;border-bottom:3px solid transparent}
+.tab.ativo[data-aba=classica]{color:var(--cl);border-color:var(--cl)}
+.tab.ativo[data-aba=quantica]{color:var(--qt);border-color:var(--qt)}
+.tab.ativo[data-aba=sobre]{color:var(--ok);border-color:var(--ok)}
+.aba{display:none} .aba.ativa{display:block}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h3{margin:0 0 10px;font-size:1rem}
+label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
+label b{color:var(--txt);float:right;font-family:'IBM Plex Mono',monospace}
+input[type=range]{width:100%}
+select{width:100%;background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px}
+.btn{width:100%;margin-top:14px;padding:11px;border:none;border-radius:8px;font:inherit;font-weight:600;cursor:pointer;color:#0d1117}
+.btn.cl{background:var(--cl)} .btn.qt{background:var(--qt)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi small{color:var(--mut);font-size:.75rem;display:block}
+.kpi span{font-size:1.35rem;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.plots{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+@media(max-width:1100px){.plots{grid-template-columns:1fr}}
+.plot{height:440px} .plot.peq{height:440px}
+pre{background:#0a0e14;border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:#c4b5fd}
+.info{font-size:.88rem;color:var(--mut)} .info p{margin:6px 0}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:900px){.duo{grid-template-columns:1fr}}
+.sobre img{max-width:100%;border-radius:10px;border:1px solid var(--line)}
+.loading{opacity:.5;pointer-events:none}
+footer{text-align:center;color:var(--mut);font-size:.8rem;padding:20px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div>
+      <h1>DBSCAN · Clássico <span>vs Quântico</span></h1>
+      <div class="sub">Clustering baseado em densidade — Flask · scikit-learn · Swap Test quântico</div>
+    </div>
+    <div class="contatos">
+      <strong>📞 Meus Contatos</strong>
+      <a href="https://www.inforpop.com" target="_blank">🌐 www.inforpop.com</a>
+      <a href="https://wa.me/5521999618643" target="_blank">📱 WhatsApp: 55 21 99961-8643</a>
+      <a href="mailto:inforpop@hotmail.com">✉️ inforpop@hotmail.com</a>
+      <a href="https://www.linkedin.com/in/pedro-paulo-ribeiro-pcd-1451498/" target="_blank">🔗 LinkedIn: Pedro Paulo Ribeiro</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav class="tabs">
+    <button class="tab ativo" data-aba="classica">🖥️ Computação Clássica</button>
+    <button class="tab" data-aba="quantica">⚛️ Computação Quântica</button>
+    <button class="tab" data-aba="sobre">🎓 Sobre o Autor</button>
+  </nav>
+
+  {% for modo in ['classica','quantica'] %}
+  {% set q = modo == 'quantica' %}
+  <section class="aba {{ 'ativa' if not q }}" id="aba-{{ modo }}">
+    <div class="grid">
+      <div class="card" id="ctrl-{{ modo }}">
+        <h3>{{ '⚛️ Parâmetros Quânticos' if q else '🖥️ Parâmetros Clássicos' }}</h3>
+        <label>Conjunto de dados</label>
+        <select data-p="dataset">
+          {% for k, v in datasets.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+        </select>
+        <label>Amostras <b data-v="n">300</b></label>
+        <input type="range" data-p="n" min="50" max="600" step="10" value="300">
+        <label>Ruído dos dados <b data-v="ruido">0.06</b></label>
+        <input type="range" data-p="ruido" min="0" max="0.3" step="0.01" value="0.06">
+        <label>ε (eps) {{ '— distância quântica' if q else '— distância euclidiana' }} <b data-v="eps">{{ '0.20' if q else '0.30' }}</b></label>
+        <input type="range" data-p="eps" min="{{ '0.02' if q else '0.05' }}" max="{{ '0.8' if q else '1.5' }}" step="0.01" value="{{ '0.2' if q else '0.3' }}">
+        <label>min_samples <b data-v="min_samples">5</b></label>
+        <input type="range" data-p="min_samples" min="2" max="30" step="1" value="5">
+        {% if q %}
+        <label>Shots por circuito <b data-v="shots">1024</b></label>
+        <input type="range" data-p="shots" min="64" max="8192" step="64" value="1024">
+        {% endif %}
+        <button class="btn {{ 'qt' if q else 'cl' }}" onclick="rodar('{{ modo }}')">▶ Executar DBSCAN</button>
+        <div class="info" style="margin-top:14px">
+          {% if q %}
+          <p>Cada par de pontos vira um <b>Swap Test</b> de 5 qubits. A fidelidade estimada pelos shots define a distância quântica <code>d = √(2(1−F))</code>.</p>
+          <p>Menos shots ⇒ mais ruído de amostragem (como em hardware real).</p>
+          {% else %}
+          <p><b>Núcleo</b>: ≥ min_samples vizinhos em ε. <b>Borda</b>: alcançável a partir de um núcleo. <b>Ruído</b>: o resto (×).</p>
+          <p>A implementação própria é validada contra o <code>sklearn.cluster.DBSCAN</code>.</p>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <div class="kpis" id="kpi-{{ modo }}"></div>
+        <div class="plots">
+          <div class="card"><div class="plot" id="scatter-{{ modo }}"></div></div>
+          <div class="card"><div class="plot peq" id="kdist-{{ modo }}"></div></div>
+        </div>
+        {% if q %}
+        <div class="duo">
+          <div class="card"><h3>Circuito do Swap Test</h3><pre>{{ circuito }}</pre>
+            <div class="info" id="verif"></div></div>
+          <div class="card"><div class="plot peq" id="hist-fid"></div></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endfor %}
+
+  <section class="aba sobre" id="aba-sobre">
+    <div class="duo">
+      <div class="card">
+        <h3>Pedro Paulo Ribeiro</h3>
+        <div class="info">
+          <p>Tecnólogo em <b>Ciência de Dados</b> — Centro Universitário Maurício de Nassau (UNINASSAU).</p>
+          <p>Desenvolvedor desde 1987. Projetos práticos de Ciência de Dados, Machine Learning e Computação Quântica.</p>
+          <p><b>Qualidade · Agilidade · Simplicidade</b></p>
+          <p>Sobre este projeto: o DBSCAN (Ester et al., 1996) agrupa pontos por densidade, encontra clusters de formato arbitrário e marca outliers como ruído — sem precisar informar o número de clusters. A versão quântica troca a distância euclidiana por uma distância baseada em fidelidade entre estados quânticos, estimada pelo Swap Test.</p>
+        </div>
+      </div>
+      <div class="card"><img src="{{ url_for('static', filename='img/diploma.png') }}" alt="Diploma de Graduação em Ciência de Dados — UNINASSAU"></div>
+    </div>
+  </section>
+</main>
+
+<footer>© 2026 Pedro Paulo Ribeiro · <a href="https://www.inforpop.com" target="_blank">www.inforpop.com</a> · Projeto prático DBSCAN Clássico vs Quântico</footer>
+
+<script>
+const PALETA = ['#38bdf8','#f472b6','#34d399','#fbbf24','#a78bfa','#fb923c','#22d3ee','#e879f9','#a3e635','#f87171'];
+const LAYOUT = {paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#e6edf3',family:'IBM Plex Sans'},
+  margin:{l:45,r:15,t:40,b:40},xaxis:{gridcolor:'#2a3342',zeroline:false},yaxis:{gridcolor:'#2a3342',zeroline:false},
+  legend:{orientation:'h',y:-0.12}};
+const CFG = {responsive:true,displaylogo:false};
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('ativo',x===t));
+  document.querySelectorAll('.aba').forEach(a=>a.classList.toggle('ativa',a.id==='aba-'+t.dataset.aba));
+  window.dispatchEvent(new Event('resize'));
+});
+document.querySelectorAll('input[type=range]').forEach(r=>{
+  const out=r.closest('.card').querySelector(`[data-v="${r.dataset.p}"]`);
+  r.oninput=()=>out.textContent=r.value;
+});
+
+function params(modo){
+  const p={}; document.querySelectorAll(`#ctrl-${modo} [data-p]`).forEach(e=>p[e.dataset.p]=e.value); return p;
+}
+const fmt=(v,d=3)=>v===null||v===undefined?'—':Number(v).toFixed(d);
+
+async function rodar(modo){
+  const ctrl=document.getElementById('ctrl-'+modo); ctrl.classList.add('loading');
+  try{
+    const url=modo==='quantica'?'/api/quantico':'/api/classico';
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(params(modo))});
+    const d=await r.json(); desenhar(modo,d);
+  }catch(e){alert('Erro: '+e)} finally{ctrl.classList.remove('loading')}
+}
+
+function desenhar(modo,d){
+  const m=d.metricas, q=modo==='quantica';
+  const kpis=[['Clusters',m.clusters,0],['Ruído',m.ruido,0],['Núcleo',m.nucleo,0],['Borda',m.borda,0],
+    ['ARI (vs real)',m.ari,3],['Silhueta',m.silhueta,3],['Tempo (ms)',d.tempo_ms,1]];
+  if(q) kpis.push(['Qubits/circuito',d.qubits,0],['Circuitos',d.n_circuitos.toLocaleString('pt-BR'),null],['Erro médio F',d.erro_fidelidade,4]);
+  else kpis.push(['sklearn (ms)',d.tempo_sklearn_ms,1],['Concordância sklearn',d.concordancia_sklearn+'%',null]);
+  document.getElementById('kpi-'+modo).innerHTML=kpis.map(([k,v,dd])=>
+    `<div class="kpi"><small>${k}</small><span>${dd===null?v:fmt(v,dd)}</span></div>`).join('');
+
+  const grupos={};
+  d.X.forEach((p,i)=>{const l=d.rotulos[i];(grupos[l]=grupos[l]||[]).push(i)});
+  const traces=Object.keys(grupos).map(Number).sort((a,b)=>a-b).map(l=>{
+    const idx=grupos[l], ruido=l===-1;
+    return {x:idx.map(i=>d.X[i][0]),y:idx.map(i=>d.X[i][1]),mode:'markers',type:'scatter',
+      name:ruido?'Ruído':'Cluster '+(l+1),
+      marker:{color:ruido?'#6b7280':PALETA[l%PALETA.length],symbol:ruido?'x':'circle',
+        size:idx.map(i=>d.nucleo[i]?9:6),line:{width:idx.map(i=>d.nucleo[i]?0:1.5),color:'#0d1117'},opacity:ruido?.7:.9}};
+  });
+  Plotly.react('scatter-'+modo,traces,{...LAYOUT,title:{text:q?'Clusters — distância quântica (Swap Test)':'Clusters — distância euclidiana',font:{size:14}}},CFG);
+
+  const eps=+params(modo).eps;
+  Plotly.react('kdist-'+modo,[
+    {y:d.k_distancia,type:'scatter',mode:'lines',name:'k-distância',line:{color:q?'#a78bfa':'#38bdf8',width:2}},
+    {x:[0,d.k_distancia.length],y:[eps,eps],mode:'lines',name:'ε atual',line:{color:'#fbbf24',dash:'dash'}}
+  ],{...LAYOUT,title:{text:'Curva k-distância (escolha de ε)',font:{size:14}},xaxis:{...LAYOUT.xaxis,title:'pontos ordenados'}},CFG);
+
+  if(q){
+    const v=d.verificacao;
+    document.getElementById('verif').innerHTML=`<p>✔ Verificação do simulador: P(0) pelo circuito completo = <b>${fmt(v.p0_circuito,6)}</b>, pela fórmula (1+F)/2 = <b>${fmt(v.p0_formula,6)}</b>.</p><p>Total de shots simulados: <b>${d.shots_total.toLocaleString('pt-BR')}</b>.</p>`;
+    Plotly.react('hist-fid',[{x:d.fidelidades,type:'histogram',nbinsx:40,marker:{color:'#a78bfa'}}],
+      {...LAYOUT,title:{text:'Distribuição das fidelidades estimadas',font:{size:14}},xaxis:{...LAYOUT.xaxis,title:'F = |⟨ψ(x)|ψ(y)⟩|²'},showlegend:false},CFG);
+  }
+}
+rodar('classica'); rodar('quantica');
+</script>
+</body>
+</html>
